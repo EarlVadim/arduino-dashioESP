@@ -979,9 +979,8 @@ void DashioBLE::begin(uint32_t _passKey) {
     // Setup BLE advertising
     pAdvertising = NimBLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(BLEUUID(SERVICE_UUID));
-    pAdvertising->setScanResponse(true);
-    pAdvertising->setMinPreferred(0x06);  // functions that help with iPhone connections issue
-    pAdvertising->setMaxPreferred(0x12);
+    // pAdvertising->setScanResponse(true); function not supported in NimBLE 2.0.0
+    pAdvertising->setPreferredParams(0x06,0x12);  // functions that help with iPhone connections issue
     pAdvertising->start();
 }
     
