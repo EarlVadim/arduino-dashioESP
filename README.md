@@ -35,3 +35,9 @@ For previous releases, please refer to <a href="https://github.com/dashio-connec
 ### 1.2.1 (1 October 2024)
 
 - Updated library properties
+
+### 1.2.2 (11 December 2024)
+
+- Fix change of use of compiler directive #endif by some Arduino IDE installations
+
+

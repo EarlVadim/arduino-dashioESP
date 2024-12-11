@@ -42,7 +42,8 @@
     #include <arduino-timer.h>
     #include <ESP8266WiFi.h>   // Included in the 8266 Arduino library
     #include <ESP8266mDNS.h>   // Included in the 8266 Arduino library
-#elif ESP32
+#endif
+#ifdef ESP32
     #include <WiFi.h>
     #include <esp_wifi.h>
     #include <NimBLEDevice.h>  // ESP32 BLE Arduino library by Neil Kolban. Included in Arduino IDE
@@ -227,7 +228,8 @@ private:
 #ifdef ESP32
     TaskHandle_t wifiOneSecTaskHandle; // Don't really need to keep this as it's not being used.
     static void wifiOneSecondTask(void *parameter);
-#elif ESP8266
+#endif
+#ifdef ESP8266
     Timer<> timer;
     static bool onTimerCallback(void *argument);
 #endif

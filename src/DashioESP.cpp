@@ -29,7 +29,8 @@
 #define WIFI_TIMEOUT_S 300 // Restart after 5 minutes
 #ifdef ESP32
     #define C64_MAX_LENGHT 1000
-#elif ESP8266
+#endif
+#ifdef ESP8266
     #define C64_MAX_LENGHT 500
 #endif
 
@@ -54,7 +55,8 @@ DashioWiFi::DashioWiFi(DashioDevice *_dashioDevice) {
     
 #ifdef ESP32
     xTaskCreatePinnedToCore(this->wifiOneSecondTask, "OneSecTask", 2048, this, 0, &wifiOneSecTaskHandle, 0);
-#elif ESP8266
+#endif
+#ifdef ESP8266
     timer.every(1000, onTimerCallback); // 1000ms
 #endif
 }
@@ -66,7 +68,8 @@ void DashioWiFi::wifiOneSecondTask(void *parameter) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
-#elif ESP8266
+#endif
+#ifdef ESP8266
 bool DashioWiFi::onTimerCallback(void *argument) { // Timer Interrupt
     oneSecond = true;
     return true; // to repeat the timer action - false to stop
@@ -173,7 +176,8 @@ void DashioWiFi::run() {
                 if (mqttConnection->esp32_mqtt_blocking) {
                     mqttConnection->checkConnection();
                 }
-#elif ESP8266
+#endif
+#ifdef ESP8266
                 mqttConnection->checkConnection();
 #endif
 
@@ -201,7 +205,8 @@ String DashioWiFi::macAddress() {
   #else
     return WiFi.macAddress();
   #endif
-#elif ESP8266
+#endif
+#ifdef ESP8266
     return WiFi.macAddress();
 #endif
 }
@@ -223,7 +228,8 @@ bool DashioSoftAP::begin(const String& password) {
 
 #ifdef ESP32
     bool result = WiFi.softAP("Dash_Provision", password.c_str(), 1, 0, 1);
-#elif ESP8266
+#endif
+#ifdef ESP8266
     bool result = WiFi.softAP(F("Dash_Provision"), password, 1, 0, 1);
 #endif
     if (result == true) {
@@ -271,7 +277,8 @@ DashioTCP::DashioTCP(DashioDevice *_dashioDevice, bool _printMessages, uint16_t 
     maxTCPclients = _maxTCPclients;
     tcpClients = new TCPclient[_maxTCPclients];
 }
-#elif ESP8266
+#endif
+#ifdef ESP8266
 DashioTCP::DashioTCP(DashioDevice *_dashioDevice, bool _printMessages, uint16_t _tcpPort, uint8_t _maxTCPclients) : wifiServer(_tcpPort) {
     dashioDevice = _dashioDevice;
     tcpPort = _tcpPort;
@@ -957,9 +964,9 @@ void DashBLE::setPassKey(uint32_t _passKey) {
 }
         
 void DashioBLE::begin(uint32_t _passKey) {
-    String localName = F("DashIO_");
-    localName += dashioDevice->type;
-    NimBLEDevice::init(localName.c_str());
+    std::string localName = "DashIO_";
+    localName += std::string(dashioDevice->type.c_str());
+    NimBLEDevice::init(localName);
     NimBLEDevice::setMTU(BLE_MAX_SEND_MESSAGE_LENGTH);
     
     if ((String(_passKey).length() == 6)) {
@@ -978,10 +985,15 @@ void DashioBLE::begin(uint32_t _passKey) {
     
     // Setup BLE advertising
     pAdvertising = NimBLEDevice::getAdvertising();
-    pAdvertising->addServiceUUID(BLEUUID(SERVICE_UUID));
-    pAdvertising->setScanResponse(true);
-    pAdvertising->setMinPreferred(0x06);  // functions that help with iPhone connections issue
-    pAdvertising->setMaxPreferred(0x12);
+    pAdvertising->addServiceUUID(SERVICE_UUID);
+    pAdvertising->setScanResponse(true); // Please continute to use Nimble 1.4.3 until the wrinkles in NimBLE 2.0 have been ironed out.
+    pAdvertising->setMinPreferred(0x06); // Please continute to use Nimble 1.4.3 until the wrinkles in NimBLE 2.0 have been ironed out.
+    pAdvertising->setMaxPreferred(0x12); // Please continute to use Nimble 1.4.3 until the wrinkles in NimBLE 2.0 have been ironed out.
+/*
+    pAdvertising->setName(localName);
+    pAdvertising->enableScanResponse(true);
+    pAdvertising->setPreferredParams(0x06,0x12); // New format function in NimBLE 2.0.0
+*/
     pAdvertising->start();
 }
     
