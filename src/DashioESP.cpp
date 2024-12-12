@@ -759,20 +759,20 @@ public:
     ServerCallbacks(DashioBLE * local_DashioBLE): local_DashioBLE(local_DashioBLE) { }
     DashioBLE *local_DashioBLE = nullptr;
 
-    void onConnect(NimBLEServer* pServer, ble_gap_conn_desc *desc) {
-        ESP_LOGI(DTAG, "BLE Client Connected, handle: %d", desc->conn_handle);
-        if (!local_DashioBLE->setConnectionActive(desc->conn_handle)) {
-            ESP_LOGI(DTAG, "No connections left for handle: %d", desc->conn_handle);
+    void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
+        ESP_LOGI(DTAG, "BLE Client Connected, handle: %d", connInfo.getConnHandle());
+        if (!local_DashioBLE->setConnectionActive(connInfo.getConnHandle())) {
+            ESP_LOGI(DTAG, "No connections left for handle: %d", connInfo.getConnHandle());
         }
 
         if (pServer->getConnectedCount() < local_DashioBLE->maxBLEclients) {
             NimBLEDevice::startAdvertising(); // Keep advertising for more connections
         }
     }
-
-    void onDisconnect(NimBLEServer* pServer, ble_gap_conn_desc *desc) {
-        ESP_LOGI(DTAG, "BLE Client Disconnected, handle: %d", desc->conn_handle);
-        local_DashioBLE->setConnectionInactive(desc->conn_handle);
+    
+    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
+        ESP_LOGI(DTAG, "BLE Client Disconnected, handle: %d, reason: %d", connInfo.getConnHandle(), reason);
+        local_DashioBLE->setConnectionInactive(connInfo.getConnHandle());
     }
 
     // Security callback functions
@@ -803,9 +803,9 @@ public:
     CharacteristicCallbacks(DashioBLE * local_DashioBLE): local_DashioBLE(local_DashioBLE) { }
     DashioBLE *local_DashioBLE = nullptr;
 
-    void onWrite(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc) { // BLE callback for when a message is received
+    void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo& connInfo) { // BLE callback for when a message is received
         std::string payload = pCharacteristic->getValue();
-        local_DashioBLE->data.processMessage(payload.c_str(), desc->conn_handle); /// The message components are stored within the connection where the messageReceived flag is set
+        local_DashioBLE->data.processMessage(payload.c_str(), connInfo.getConnHandle()); /// The message components are stored within the connection where the messageReceived flag is set
     }
 };
 
@@ -986,14 +986,9 @@ void DashioBLE::begin(uint32_t _passKey) {
     // Setup BLE advertising
     pAdvertising = NimBLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID);
-    pAdvertising->setScanResponse(true); // Please continute to use Nimble 1.4.3 until the wrinkles in NimBLE 2.0 have been ironed out.
-    pAdvertising->setMinPreferred(0x06); // Please continute to use Nimble 1.4.3 until the wrinkles in NimBLE 2.0 have been ironed out.
-    pAdvertising->setMaxPreferred(0x12); // Please continute to use Nimble 1.4.3 until the wrinkles in NimBLE 2.0 have been ironed out.
-/*
-    pAdvertising->setName(localName);
-    pAdvertising->enableScanResponse(true);
-    pAdvertising->setPreferredParams(0x06,0x12); // New format function in NimBLE 2.0.0
-*/
+    pAdvertising->enableScanResponse(true);      // New function in NimBLE 2.0.0 - Please make sure you are using NimBLE 2.X.X
+    pAdvertising->setName(localName);            // New function in NimBLE 2.0.0 - Please make sure you are using NimBLE 2.X.X
+    pAdvertising->setPreferredParams(0x06,0x12); // New function in NimBLE 2.0.0 - Please make sure you are using NimBLE 2.X.X
     pAdvertising->start();
 }
     

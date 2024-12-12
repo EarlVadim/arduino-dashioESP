@@ -46,4 +46,8 @@ For previous releases, please refer to <a href="https://github.com/dashio-connec
 
 - Fix change of use of compiler directive #endif by some Arduino IDE installations
 
+### 1.2.3 (12 December 2024)
+
+- Migrated to NimBLE 2.0.0
+
 
