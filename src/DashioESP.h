@@ -181,7 +181,9 @@ private:
     NimBLEServer *pServer = nullptr;
     NimBLECharacteristic *pCharacteristic = nullptr;
     NimBLEAdvertising *pAdvertising = nullptr;
+    bool isConfig = false;
     
+    void sendMessage(const String& message, bool cfgOverride);
     void initialiseClientHolders();
     void bleNotifyValue(const String& message);
     void processConfig();

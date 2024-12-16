@@ -44,7 +44,7 @@ const int MQTT_SEND_WAIT_MS = 1000;
 const int MQTT_SEND_BUFFER_MIN = 1024;
 
 // BLE
-const int BLE_MAX_SEND_MESSAGE_LENGTH = 185; // 185 for iPhone 6, but can be up to 517
+const int BLE_MAX_SEND_MESSAGE_LENGTH = 500; // 185 for iPhone 6, but can be up to 517
 
 // ---------------------------------------- WiFi ---------------------------------------
 
@@ -826,12 +826,23 @@ DashioBLE::DashioBLE(DashioDevice *_dashioDevice, bool _printMessages, uint8_t _
 }
 
 void DashioBLE::bleNotifyValue(const String& message) {
+    if (printMessages) {
+        Serial.println(message);
+    }
     pCharacteristic->setValue(message);
     pCharacteristic->notify();
 }
 
 void DashioBLE::sendMessage(const String& message) {
-    if (isConnected()) {
+    sendMessage(message, false);
+}
+
+void DashioBLE::sendMessage(const String& message, bool cfgOverride) {
+    if (isConnected() && (!isConfig || cfgOverride)) {
+        if (printMessages) {
+            Serial.println(F("---- BLE Sent ----"));
+        }
+
         int maxMessageLength = NimBLEDevice::getMTU() - 3;
         
         if (message.length() <= maxMessageLength) {
@@ -854,17 +865,15 @@ void DashioBLE::sendMessage(const String& message) {
                 bleNotifyValue(subStr);
             }
         }
-    
-        if (printMessages) {
-            Serial.println(F("---- BLE Sent ----"));
-            Serial.println(message);
-        }
     }
 }
 
 void DashioBLE::processConfig() {
-    sendMessage(dashioDevice->getC64ConfigBaseMessage());
-    
+    isConfig = true;
+
+    sendMessage(dashioDevice->getC64ConfigBaseMessage(), true);
+
+    int maxMessageLength = NimBLEDevice::getMTU() - 3;
     int c64Length = strlen_P(dashioDevice->configC64Str);
     int length = 0;
     String message = "";
@@ -873,14 +882,15 @@ void DashioBLE::processConfig() {
 
         message += myChar;
         length++;
-        if (length == C64_MAX_LENGHT) {
-            sendMessage(message);
+        if (length == maxMessageLength) {
+            bleNotifyValue(message);
             message = "";
             length = 0;
         }
     }
     message += String(END_DELIM);
-    sendMessage(message);
+    bleNotifyValue(message);
+    isConfig = false;
 }
 
 void DashioBLE::run() {
